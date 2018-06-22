@@ -11,7 +11,7 @@
 // TESTING only
 #include "hd/stopwatch.h"
 #include <iostream>
-//#define PRINT_BENCHMARKS
+// #define PRINT_BENCHMARKS
 
 #include <thrust/device_vector.h>
 #include <thrust/count.h>
@@ -22,9 +22,9 @@
 #include <thrust/iterator/zip_iterator.h>
 #include <thrust/iterator/counting_iterator.h>
 #include <thrust/iterator/discard_iterator.h>
-
+#include <thrust/extrema.h>
 #include <thrust/iterator/retag.h>
-
+#include <thrust/tuple.h>
 
 // Global instance of the custom temporary memory allocator for Thrust
 // TODO: We should be calling g_allocator.free_all() somewhere at the end of
@@ -93,23 +93,25 @@ public:
     //   isolated giants (based on merge_dist), and then computing the
     //   details of each giant into the d_giant_* arrays using
     //   reduce_by_key and some scatter operations.
-    
+    //printf("d_data[0] = %f\n",d_data[0]);
+    //printf("d_data[1] = %f\n",d_data[1]);
     using thrust::copy_if;
     using thrust::make_zip_iterator;
     using thrust::make_tuple;
     using thrust::make_counting_iterator;
-  
     typedef thrust::device_ptr<const hd_float> const_float_ptr;
     //typedef thrust::system::cuda::pointer<const hd_float> const_float_ptr;
     typedef thrust::device_ptr<hd_float>             float_ptr;
     typedef thrust::device_ptr<hd_size>              size_ptr;
-  
+    
     const_float_ptr d_data_begin(d_data);
     const_float_ptr d_data_end(d_data + count);
   
 #ifdef PRINT_BENCHMARKS
     Stopwatch timer;
-  
+    Stopwatch timer_count_if;
+    Stopwatch timer_max_element; 
+ 
     timer.start();
 #endif
   
@@ -118,28 +120,52 @@ public:
     //       This turns out to be critical to performance!
     
     // Quickly count how much giant data there is so we know the space needed
+    //timer_max_element.start();
+    /*thrust::device_ptr<const hd_float> max_element;
+    max_element = thrust::max_element(d_data_begin, d_data_end);
+    hd_size giant_data_count;
+    if ((hd_float)(*max_element)> thresh) {
+    giant_data_count = thrust::count_if(thrust::retag<my_tag>(d_data_begin),
+                                                thrust::retag<my_tag>(d_data_end),
+                                                greater_than_val<hd_float>(thresh));
+	}
+    //std::cout << "GIANT_DATA_COUNT = " << giant_data_count << std::endl;
+    // We can bail early if there are no giants at all
+else {
+	giant_data_count = 0;
+    //if( 0 == giant_data_count ) {
+      //std::cout << "**** Found ZERO giants" << std::endl;
+      return HD_NO_ERROR;
+    }*/
+  //timer_max_element.stop();
+//timer_count_if.start();
     hd_size giant_data_count = thrust::count_if(thrust::retag<my_tag>(d_data_begin),
                                                 thrust::retag<my_tag>(d_data_end),
                                                 greater_than_val<hd_float>(thresh));
     //std::cout << "GIANT_DATA_COUNT = " << giant_data_count << std::endl;
     // We can bail early if there are no giants at all
-    if( 0 == giant_data_count ) {
+//std::cout << "giant_data_count = " << giant_data_count << std::endl;
+//std::cout << "giant_data_count_1 = " << giant_data_count_1 << std::endl;
+if (giant_data_count == 0) {
+    //if( 0 == giant_data_count ) {
       //std::cout << "**** Found ZERO giants" << std::endl;
       return HD_NO_ERROR;
     }
-  
+//timer_count_if.stop();
 #ifdef PRINT_BENCHMARKS
     cudaThreadSynchronize();
     timer.stop();
     std::cout << "count_if time:           " << timer.getTime() << " s" << std::endl;
+    //std::cout << "count_if_only time:      " << timer_count_if.getTime() << " s" << std::endl;
+    //std::cout << "max_element time:        " << timer_max_element.getTime() << " s" << std::endl;
     timer.reset();
+    timer_count_if.reset();
+    timer_max_element.reset();
   
     timer.start();
 #endif
-  
     d_giant_data.resize(giant_data_count);
     d_giant_data_inds.resize(giant_data_count);
-  
 #ifdef PRINT_BENCHMARKS
     cudaThreadSynchronize();
     timer.stop();
@@ -150,25 +176,18 @@ public:
   
     timer.start();
 #endif
-  
-    hd_size giant_data_count2 = 
-      copy_if(make_zip_iterator(make_tuple(thrust::retag<my_tag>(d_data_begin),
+    hd_size giant_data_count2 = thrust::copy_if(make_zip_iterator(make_tuple(thrust::retag<my_tag>(d_data_begin),
                                            make_counting_iterator(0u))),
               make_zip_iterator(make_tuple(thrust::retag<my_tag>(d_data_begin),
                                            make_counting_iterator(0u)))+count,
               (d_data_begin), // the stencil
-              make_zip_iterator(make_tuple(thrust::retag<my_tag>(d_giant_data.begin()),
-                                           thrust::retag<my_tag>(d_giant_data_inds.begin()))),
-              greater_than_val<hd_float>(thresh))
-      - make_zip_iterator(make_tuple(thrust::retag<my_tag>(d_giant_data.begin()),
-                                     thrust::retag<my_tag>(d_giant_data_inds.begin())));
-  
+		 make_zip_iterator(make_tuple(thrust::retag<my_tag>(d_giant_data.begin()), thrust::retag<my_tag>(d_giant_data_inds.begin()))),  greater_than_val<hd_float>(thresh))
+			- make_zip_iterator(make_tuple(thrust::retag<my_tag>(d_giant_data.begin()), thrust::retag<my_tag>(d_giant_data_inds.begin())));
 #ifdef PRINT_BENCHMARKS
     cudaThreadSynchronize();
     timer.stop();
     std::cout << "giant_data copy_if time: " << timer.getTime() << " s" << std::endl;
     timer.reset();
-  
     timer.start();
 #endif
   
@@ -179,7 +198,6 @@ public:
                                 thrust::retag<my_tag>(d_giant_data_inds.end()),
                                 thrust::retag<my_tag>(d_giant_data_segments.begin()),
                                 not_nearby<hd_size>(merge_dist));
-  
     //hd_size giant_count_quick = thrust::count(d_giant_data_segments.begin(),
     //                                          d_giant_data_segments.end(),
     //                                          (int)true);
@@ -189,14 +207,11 @@ public:
       d_giant_data_segments.front() = 0;
       //d_giant_data_segments.front() = 1;
     }
-  
     //thrust::device_vector<hd_size> d_giant_data_seg_ids(d_giant_data_segments.size());
     d_giant_data_seg_ids.resize(d_giant_data_segments.size());
-    
     thrust::inclusive_scan(thrust::retag<my_tag>(d_giant_data_segments.begin()),
                            thrust::retag<my_tag>(d_giant_data_segments.end()),
                            thrust::retag<my_tag>(d_giant_data_seg_ids.begin()));
-  
     // We extract the number of giants from the end of the exclusive scan
     //hd_size giant_count = d_giant_data_seg_ids.back() +
     //  d_giant_data_segments.back() + 1;
@@ -215,7 +230,6 @@ public:
   
     timer.start();
 #endif
-  
     hd_size new_giants_offset = d_giant_peaks.size();
     // Allocate space for the new giants
     d_giant_peaks.resize(d_giant_peaks.size() + giant_count);
@@ -236,7 +250,6 @@ public:
     timer.start();
 #endif
     
-  
     // Now we find the value (snr) and location (time) of each giant's maximum
     hd_size giant_count2 = 
       reduce_by_key(thrust::retag<my_tag>(d_giant_data_inds.begin()), // the keys
@@ -250,7 +263,6 @@ public:
                     maximum_first<thrust::tuple<hd_float,hd_size> >())
       .second - make_zip_iterator(make_tuple(thrust::retag<my_tag>(new_giant_peaks_begin),
                                              thrust::retag<my_tag>(new_giant_inds_begin)));
-  
 #ifdef PRINT_BENCHMARKS
     cudaThreadSynchronize();
     timer.stop();
@@ -264,7 +276,6 @@ public:
     if( giant_count > 0 ) {
       d_giant_data_segments[0] = 1;
     }
-  
     // Create arrays of the beginning and end indices of each giant
     thrust::scatter_if(d_giant_data_inds.begin(),
                        d_giant_data_inds.end(),
@@ -278,7 +289,6 @@ public:
                        d_giant_data_seg_ids.begin(),
                        d_giant_data_segments.begin() + 1,
                        new_giant_ends_begin);
-    
     if( giant_count > 0 ) {
       d_giant_ends.back() = d_giant_data_inds.back() + 1;
     }
@@ -292,10 +302,9 @@ public:
   
     std::cout << "--------------------" << std::endl;
 #endif
-  
     return HD_NO_ERROR;
   }
-  
+ 
 };
 
 // Public interface (wrapper for implementation)

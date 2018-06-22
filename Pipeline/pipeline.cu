@@ -15,9 +15,23 @@ using std::endl;
 #include <iomanip>
 #include <string>
 #include <fstream>
+#include <time.h>
+
+#include </usr/local/psrdada/mopsr/src/sigproc/sigproc.h>
+#include </home/user/sigproc-4.3/header.h>
+
+#include "dada_client.h"
+#include "dada_def.h"
+#include "dada_hdu.h"
+#include "multilog.h"
+#include "ipcio.h"
+#include "ipcbuf.h"
+#include "dada_affinity.h"
+#include "ascii_header.h"
 
 #include <thrust/host_vector.h>
 #include <thrust/device_vector.h>
+
 using thrust::host_vector;
 using thrust::device_vector;
 #include <thrust/version.h>
@@ -25,6 +39,10 @@ using thrust::device_vector;
 #include <thrust/reduce.h>
 #include <thrust/iterator/constant_iterator.h>
 #include <thrust/gather.h>
+#include <thrust/sequence.h>
+#include <thrust/transform.h>
+#include <thrust/iterator/permutation_iterator.h>
+#include <thrust/fill.h>
 
 #include "hd/pipeline.h"
 #include "hd/maths.h"
@@ -43,7 +61,66 @@ using thrust::device_vector;
 #include "hd/stopwatch.h"         // For benchmarking
 //#include "hd/write_time_series.h" // For debugging
 
+typedef thrust::device_vector<hd_byte>::iterator EIB;
+typedef thrust::device_vector<unsigned short>::iterator EIS;
+typedef thrust::device_vector<int>::iterator II;
+
 #include <dedisp.h>
+
+FILE *output;
+
+void send_string(char *string) /* includefile */
+{
+  int len;
+  len=strlen(string);
+  fwrite(&len, sizeof(int), 1, output);
+  fwrite(string, sizeof(char), len, output);
+}
+
+void send_float(char *name,float floating_point) /* includefile */
+{
+  send_string(name);
+  fwrite(&floating_point,sizeof(float),1,output);
+}
+
+void send_double (char *name, double double_precision) /* includefile */
+{
+  send_string(name);
+  fwrite(&double_precision,sizeof(double),1,output);
+}
+
+void send_int(char *name, int integer) /* includefile */
+{
+  send_string(name);
+  fwrite(&integer,sizeof(int),1,output);
+}
+
+void send_char(char *name, char integer) /* includefile */
+{
+  send_string(name);
+  fwrite(&integer,sizeof(char),1,output);
+}
+
+
+void send_long(char *name, long integer) /* includefile */
+{
+  send_string(name);
+  fwrite(&integer,sizeof(long),1,output);
+}
+
+void send_long_double(char *name, long double long_double) /* includefile */
+{
+  send_string(name);
+  fwrite(&long_double,sizeof(long double),1,output);
+}
+
+void send_coords(double raj, double dej, double az, double za) /*includefile*/
+{
+  if ((raj != 0.0) || (raj != -1.0)) send_double("src_raj",raj);
+  if ((dej != 0.0) || (dej != -1.0)) send_double("src_dej",dej);
+  if ((az != 0.0)  || (az != -1.0))  send_double("az_start",az);
+  if ((za != 0.0)  || (za != -1.0))  send_double("za_start",za);
+}
 
 #define HD_BENCHMARK
 
@@ -150,11 +227,12 @@ hd_error hd_create_pipeline(hd_pipeline* pipeline_, hd_params params) {
     return throw_error(error);
   }
   
-  if( params.verbosity >= 3 ) {
+  if( params.verbosity >= 1 ) {
     cout << "nchans = " << params.nchans << endl;
     cout << "dt     = " << params.dt << endl;
     cout << "f0     = " << params.f0 << endl;
     cout << "df     = " << params.df << endl;
+    //cout << "nsnap     = " << params.nsnap << endl;
   }
   
   if( params.verbosity >= 2 ) {
@@ -203,10 +281,46 @@ hd_error hd_create_pipeline(hd_pipeline* pipeline_, hd_params params) {
   return HD_NO_ERROR;
 }
 
+// functor to fill permutation indices
+struct permute_functor
+{
+	
+	__device__
+	int operator()(const int &x) const {
+
+	    int idx, prod;
+	    idx = (int)(x / 8);
+	    prod = (int)(x % 8);
+
+	    return (int)(idx*8 + 7-prod);
+
+	}
+};
+
+// functor to make indices for summation
+struct summing_functor
+{
+
+	int n, nsnap;
+	summing_functor(int _n, int _nsnap) : n(_n), nsnap(_nsnap) {}
+	
+	__device__
+	int operator()(const int &x) const {
+
+	    int idx = (int)(x / 2048);
+	    int chan = (int)(x % 2048);
+	    
+	    return chan + 2048 * (idx*nsnap + n);
+
+	}
+};
+
 hd_error hd_execute(hd_pipeline pl,
                     const hd_byte* h_filterbank, hd_size nsamps, hd_size nbits,
                     hd_size first_idx, hd_size* nsamps_processed) {
   hd_error error = HD_NO_ERROR;
+
+  
   
   Stopwatch total_timer;
   Stopwatch memory_timer;
@@ -220,9 +334,16 @@ hd_error hd_execute(hd_pipeline pl,
   Stopwatch coinc_timer;
   Stopwatch giants_timer;
   Stopwatch candidates_timer;
-  
+  Stopwatch write_timer; 
+ 
   start_timer(total_timer);
-  
+
+  printf("First idx %lu\n",first_idx);
+
+//cudaDeviceProp  prop;
+//cudaGetDeviceProperties(&prop,0);
+//std::cout << prop.name << std::endl;
+
   start_timer(clean_timer);
   // Note: Filterbank cleaning must be done out-of-place
   hd_size nbytes = nsamps * pl->params.nchans * nbits / 8;
@@ -230,22 +351,40 @@ hd_error hd_execute(hd_pipeline pl,
   pl->h_clean_filterbank.resize(nbytes);
   std::vector<int>          h_killmask(pl->params.nchans, 1);
   stop_timer(memory_timer);
+
+  // get mjd, and decide whether to look at Crab
+  time_t rawtime;
+  struct tm *info;
+  time(&rawtime);
+  info = localtime(&rawtime);
+  double daytime = (double)(info->tm_hour+info->tm_min/60.+info->tm_sec/3600.);
+  double mjd = (double)(57754.+info->tm_yday+(info->tm_hour+7.)/24.+info->tm_min/(24.*60.)+info->tm_sec/(24.*60.*60.));
+  printf("Have MJD %.4lf, DAYTIME %.4lf\n",mjd,daytime);
+  //FILE *fcrab;
+  double tmjd;
+  int doCrab=0;
+  /*fcrab=fopen("/usr/local/heimdall/Share/crab_mjds.dat","r");
+  while (doCrab==0 && !feof(fcrab)) {
+      fscanf(fcrab,"%lf\n",&tmjd);
+      if ((mjd-tmjd)*(mjd-tmjd)<(0.5/24.)*(0.5/24.))
+      	 doCrab=1;
+  }
+  if (doCrab)
+     cout << "crabbytime!" << endl;
   
-  if( pl->params.verbosity >= 2 ) {
+  fclose(fcrab);*/  
+  // check for midday RFI: 12:30 to 13:30 local
+  int shutter=1;      
+  /*if (daytime>12.5 && daytime<13.5) shutter=0;
+  if (shutter==0) cout << "shuttered" << endl;
+  else cout << "un-shuttered" << endl;*/
+
+  /*if( pl->params.verbosity >= 2 ) {
     cout << "\tCleaning 0-DM filterbank..." << endl;
   }
   
   // Start by cleaning up the filterbank based on the zero-DM time series
   hd_float cleaning_dm = 0.f;
-  if( pl->params.verbosity >= 3 ) {
-    /*
-    cout << "\tWriting dirty filterbank to disk..." << endl;
-    write_host_filterbank(&h_filterbank[0],
-                          pl->params.nchans, nsamps, nbits,
-                          pl->params.dt, pl->params.f0, pl->params.df,
-                          "dirty_filterbank.fil");
-    */
-  }
   // Note: We only clean the narrowest zero-DM signals; otherwise we
   //         start removing real stuff from higher DMs.
   error = clean_filterbank_rfi(pl->dedispersion_plan,
@@ -259,13 +398,45 @@ hd_error hd_execute(hd_pipeline pl,
                                pl->params.baseline_length,
                                pl->params.rfi_tol,
                                pl->params.rfi_min_beams,
-                               pl->params.rfi_broad,
-                               pl->params.rfi_narrow,
                                1);//pl->params.boxcar_max);
   if( error != HD_NO_ERROR ) {
     return throw_error(error);
-  }
+  }*/
 
+  // do permutation
+  // h_filterbank must have size nsamps*nchans*nsnap*nbits
+
+  // from network to host byte order
+  /*thrust::device_vector<unsigned char> d_perm_fil(nbytes*pl->params.nsnap);
+  unsigned char* h_perm_fil_p;
+  h_perm_fil_p = (unsigned char *)malloc(nbytes*pl->params.nsnap);
+  thrust::copy(h_filterbank,h_filterbank+nbytes*pl->params.nsnap,d_perm_fil.begin());
+  thrust::device_vector<int> d_idx(nbytes*pl->params.nsnap);
+  thrust::sequence(d_idx.begin(),d_idx.end());
+  thrust::transform(d_idx.begin(),d_idx.end(),d_idx.begin(),permute_functor());
+  thrust::permutation_iterator<EIB,II> iter(d_perm_fil.begin(),d_idx.begin());
+  thrust::copy(iter,iter+nbytes*pl->params.nsnap,&h_perm_fil_p[0]);
+
+  // sum over SNAPs
+  unsigned short* h_sfil = (unsigned short *)h_perm_fil_p;
+  thrust::device_vector<unsigned short> d_perm_fil_p(nsamps * pl->params.nchans * pl->params.nsnap);
+  thrust::copy(h_sfil,h_sfil+nsamps*pl->params.nchans*pl->params.nsnap,d_perm_fil_p.begin());
+  thrust::device_vector<unsigned short> d_fil(nsamps * pl->params.nchans);
+  thrust::fill(d_fil.begin(),d_fil.end(),0);
+  thrust::device_vector<int> d_idx2(nsamps * pl->params.nchans);
+  for (int i=0;i<pl->params.nsnap;i++) {
+      thrust::sequence(d_idx2.begin(),d_idx2.end());
+      thrust::transform(d_idx2.begin(),d_idx2.end(),d_idx2.begin(),summing_functor(i,pl->params.nsnap));
+      thrust::permutation_iterator<EIS,II> iter2(d_perm_fil_p.begin(),d_idx2.begin());
+      thrust::transform(iter2,iter2+nsamps*pl->params.nchans,d_fil.begin(),thrust::plus<unsigned short>());
+  }
+  unsigned short* h_fil;
+  h_fil = (unsigned short *)malloc(2*nsamps * pl->params.nchans);
+  thrust::copy(d_fil.begin(),d_fil.end(),&h_fil[0]);
+  memcpy(&pl->h_clean_filterbank[0],&h_fil[0],nbytes);*/
+
+  std::copy(h_filterbank,h_filterbank+nbytes,pl->h_clean_filterbank.begin());
+  
   if( pl->params.verbosity >= 2 ) {
     cout << "Applying manual killmasks" << endl;
   }
@@ -284,9 +455,6 @@ hd_error hd_execute(hd_pipeline pl,
   if( pl->params.verbosity >= 2 ) {
     cout << "Bad channel count = " << bad_chan_count << endl;
   }
-  
-  // TESTING
-  //h_clean_filterbank.assign(h_filterbank, h_filterbank+nbytes);
   
   stop_timer(clean_timer);
   
@@ -428,9 +596,12 @@ hd_error hd_execute(hd_pipeline pl,
   hd_size write_dm = 0;
   
   bool too_many_giants = false;
-  
+  int notrig = 0;
+
   // For each DM
   for( hd_size dm_idx=0; dm_idx<dm_count; ++dm_idx ) {
+  //if ((dm_list[dm_idx]>53. && dm_list[dm_idx]<60.5) || (dm_list[dm_idx]>100.)) {
+
     hd_size  cur_dm_scrunch = scrunch_factors[dm_idx];
     hd_size  cur_nsamps  = nsamps_computed / cur_dm_scrunch;
     hd_float cur_dt      = pl->params.dt * cur_dm_scrunch;
@@ -543,13 +714,13 @@ hd_error hd_execute(hd_pipeline pl,
     // For each boxcar filter
     // Note: We cannot detect pulse widths < current time resolution
     for( hd_size filter_width=cur_dm_scrunch;
-         filter_width<=pl->params.boxcar_max;
+         filter_width<=pl->params.boxcar_max/64;
          filter_width*=2 ) {
       hd_size rel_filter_width = filter_width / cur_dm_scrunch;
       hd_size filter_idx = get_filter_index(filter_width);
       
       if( pl->params.verbosity >= 4 ) {
-        cout << "Filtering each beam at width of " << filter_width << " filter_idx=" << filter_idx << endl;
+        cout << "Filtering each beam at width of " << filter_width << endl;
       }
       
       // Note: Filter width is relative to the current time resolution
@@ -561,7 +732,7 @@ hd_error hd_execute(hd_pipeline pl,
                                             hd_size(1));
       // Filter width relative to cur_dm_scrunch AND tscrunch
       hd_size rel_rel_filter_width = rel_filter_width / rel_tscrunch_width;
-
+      
       start_timer(filter_timer);
       
       error = matched_filter_plan.exec(filtered_series,
@@ -611,14 +782,10 @@ hd_error hd_execute(hd_pipeline pl,
       hd_size prev_giant_count = d_giant_peaks.size();
       
       if( pl->params.verbosity >= 4 ) {
-        cout << "Finding giants..." << endl;
+        cout << "Finding giants..." << filter_width << endl;
       }
       
-      start_timer(giants_timer);
-
-      if( pl->params.verbosity >= 4 ) {
-        cerr << "pl->params.cand_sep_time=" << pl->params.cand_sep_time << " rel_rel_filter_width=" << rel_rel_filter_width << endl;
-      }
+      start_timer(giants_timer);	
       
       error = giant_finder.exec(filtered_series, cur_nsamps_filtered,
                                 pl->params.detect_thresh,
@@ -633,7 +800,9 @@ hd_error hd_execute(hd_pipeline pl,
       if( error != HD_NO_ERROR ) {
         return throw_error(error);
       }
-      
+
+      stop_timer(giants_timer);					
+
       hd_size rel_cur_filtered_offset = (cur_filtered_offset /
                                          rel_tscrunch_width);
       
@@ -655,26 +824,33 @@ hd_error hd_execute(hd_pipeline pl,
       d_giant_dm_inds.resize(d_giant_peaks.size(), dm_idx);
       // Note: This could be used to track total member samples if desired
       d_giant_members.resize(d_giant_peaks.size(), 1);
-      
-      stop_timer(giants_timer);
-      
+
       // Bail if the candidate rate is too high
       hd_size total_giant_count = d_giant_peaks.size();
       hd_float data_length_mins = nsamps * pl->params.dt / 60.0;
       if ( pl->params.max_giant_rate && ( total_giant_count / data_length_mins > pl->params.max_giant_rate ) ) {
         too_many_giants = true;
         float searched = ((float) dm_idx * 100) / (float) dm_count;
+	notrig = 1;
         cout << "WARNING: exceeded max giants/min, DM [" << dm_list[dm_idx] << "] space searched " << searched << "%" << endl;
         break;
       }
+      start_timer(write_timer);
+      if (total_timer.getTime() > 6.5) {
+        too_many_giants = true;
+	float searched = ((float) dm_idx * 100) / (float) dm_count;
+	cout << "WARNING: exceeded max giants processed in 6.5s, DM [" << dm_list[dm_idx] << "] space searched " << searched << "%" << endl;
+	break;
+      }
       
     } // End of filter width loop
+  //} // end of if statement selecting DMs  
   } // End of DM loop
 
   hd_size giant_count = d_giant_peaks.size();
-  if( pl->params.verbosity >= 2 ) {
+//  if( pl->params.verbosity >= 2 ) {
     cout << "Giant count = " << giant_count << endl;
-  }
+//  }
   
   start_timer(candidates_timer);
 
@@ -769,7 +945,41 @@ hd_error hd_execute(hd_pipeline pl,
   if( pl->params.verbosity >= 2 ) {
     cout << "Writing output candidates, utc_start=" << pl->params.utc_start << endl;
   }
-
+  // input data block HDU key
+  key_t in_key = 0x0000eada;
+  dada_hdu_t* hdu_in = 0;
+  multilog_t* log = 0;
+  uint64_t header_size = 0;
+  hdu_in  = dada_hdu_create (log);
+  dada_hdu_set_key (hdu_in, in_key);
+  if (dada_hdu_connect (hdu_in) < 0) {
+    fprintf (stderr, "dsaX_spectrometer_reorder: could not connect to dada buffer\n");
+    return EXIT_FAILURE;
+  }
+  char * header_in = ipcbuf_get_next_read (hdu_in->header_block, &header_size);
+  if (!header_in)
+    {
+      multilog(log ,LOG_ERR, "main: could not read next header\n");
+      //dsaX_dbgpu_cleanup (hdu_in, hdu_out, log);
+      return EXIT_FAILURE;
+    }
+  long double MJD;
+  int MJD_date;
+  long double MJD_time;
+  double MJD_time_d;
+   if (ascii_header_get (header_in, "MJD_START", "%Lf", &MJD) != 1)
+    {
+      long double MJD = (long double)(57754.+info->tm_yday+(info->tm_hour+8.)/24.+info->tm_min/(24.*60.)+info->tm_sec/(24.*60.*60.));
+      //MJD = (char*)(&MJD_double);
+      //multilog(log, LOG_WARNING, "Header with no MJD_START. Setting to %s\n", &MJD);
+    }
+MJD_date = (int)MJD;
+MJD_time = MJD - (long double)MJD_date;
+int MJD_hour = (long double)MJD_time*24;
+int MJD_minute = ((long double)MJD_time*24-MJD_hour)*60;
+double MJD_second = (((long double)MJD_time*24-MJD_hour)*60 - MJD_minute)*60;
+MJD_time_d = (double)MJD_time;
+//printf("MJD: %0.20Lf\n MJD_date: %i\n MJD_time: %0.20Lf\n MJD_time_d: %0.20f MJD_hour: %i\n MJD_minute: %i\n MJD_second: %0.20f",MJD,MJD_date,MJD_time,MJD_time_d,MJD_hour,MJD_minute,MJD_second);
   char buffer[64];
   time_t now = pl->params.utc_start + (time_t) (first_idx / pl->params.spectra_per_second);
   strftime (buffer, 64, HD_TIMESTR, (struct tm*) gmtime(&now));
@@ -833,20 +1043,64 @@ hd_error hd_execute(hd_pipeline pl,
     if( pl->params.verbosity >= 2 )
       cout << "Output timestamp: " << buffer << endl;
 
-    std::string filename = std::string(pl->params.output_dir) + "/" + std::string(buffer) + "_" + ss.str() + ".cand";
+    //std::string filename = std::string(pl->params.output_dir) + "/" + std::string(buffer) + "_" + ss.str() + ".cand";
 
-    if( pl->params.verbosity >= 2 )
-      cout << "Output filename: " << filename << endl;
+   // if( pl->params.verbosity >= 2 )
+   //   cout << "Output filename: " << filename << endl;
 
-    std::ofstream cand_file(filename.c_str(), std::ios::out);
-    if( pl->params.verbosity >= 2 )
-      cout << "Dumping " << h_group_peaks.size() << " candidates to " << filename << endl;
+   FILE *cands_out;
+   char ofile[200];
+   sprintf(ofile,"%s/heimdall_2.cand",pl->params.output_dir);
+   cands_out = fopen(ofile,"a");
+   FILE *hit_rate;
+   char ofile2[200];
+   sprintf(ofile2,"%s/hitrate_2.txt",pl->params.output_dir);
+   hit_rate = fopen(ofile2,"a");
+    //std::ofstream cand_file(filename.c_str(), std::ios::out);
+    //if( pl->params.verbosity >= 2 )
+    //  cout << "Dumping " << h_group_peaks.size() << " candidates to " << filename << endl;
 
-    if (cand_file.good())
-    {
+    // FILE WRITING VR
+    float dm, snr;
+    char cmd[300];
+    hd_size rawsample;
+    int samp, wid;
+    char filname[200];
+    int s1, s2;
+
+    int maxI=-1;
+    float maxSNR=0.;
+
+    std::vector<hd_byte> output_data;
+    int sent=0;
+    hd_size samp_idx;
+ float thresh =7.3;
+int s1s [h_group_peaks.size()];
+int s2s [h_group_peaks.size()];
+for(int i = 0; i<h_group_peaks.size(); i++) {
+	s1s[i] = 0;
+	s2s[i] = 0;
+}
+int hit_count = 0;
       for( hd_size i=0; i<h_group_peaks.size(); ++i ) {
-        hd_size samp_idx = first_idx + h_group_inds[i];
-        cand_file << h_group_peaks[i] << "\t"
+        samp_idx = first_idx + h_group_inds[i];
+        if ((shutter) && (samp_idx>100000) && ((h_group_peaks[i] >= thresh && h_group_dms[i] > 0. && notrig==0) || (h_group_peaks[i]>7. && h_group_dms[i]>55.0 && h_group_dms[i]<58.5 && notrig==0 && doCrab))) {
+	long double cand_time = MJD+samp_idx * pl->params.dt/3600./24.;
+	int cand_MJD = (int)cand_time;
+	long double cand_hr_dbl = (cand_time-cand_MJD)*24;
+	int cand_hour = (cand_time-cand_MJD)*24;
+	long double cand_min_dbl = (cand_hr_dbl-cand_hour)*60.;
+	int cand_minute = (int) cand_min_dbl;
+	long double cand_sec = (cand_min_dbl - cand_minute)*60;
+	hit_count++;
+	fprintf(cands_out,"%g %lu %g %d %d %g %d %0.20Lf %i %i %i %.12Lf \n",h_group_peaks[i],samp_idx,samp_idx * pl->params.dt,h_group_filter_inds[i],h_group_dm_inds[i],h_group_dms[i],h_group_members[i],MJD,cand_MJD,cand_hour,cand_minute,cand_sec);
+
+	   maxSNR = h_group_peaks[i];
+	   maxI = i;
+	   //thresh = h_group_peaks[i];
+	   samp_idx = first_idx + h_group_inds[i];
+	}
+        /*cand_file << h_group_peaks[i] << "\t"
                   << samp_idx << "\t"
                   << samp_idx * pl->params.dt << "\t"
                   << h_group_filter_inds[i] << "\t"
@@ -858,17 +1112,115 @@ hd_error hd_execute(hd_pipeline pl,
                   //<< (beam+pl->params.beam)%13+1 << "\t"
                   << first_idx + h_group_begins[i] << "\t"
                   << first_idx + h_group_ends[i] << "\t"
-                  << "\n";
+                  << "\n";*/
+
+      //}
+
+      if (h_group_peaks.size()>0 && maxI!=-1) {
+      samp_idx = first_idx + h_group_begins[maxI];
+      if ((shutter) && (samp_idx>100000) && ((h_group_peaks[maxI] >= thresh && h_group_dms[maxI] > 0. && notrig==0) || (h_group_peaks[maxI]>7. && h_group_dms[maxI]>55.0 && h_group_dms[maxI]<58.5 && notrig==0 && doCrab))) {
+
+	   rawsample = (samp_idx-763); // VR wuz hre - edit for different stuff
+	   /*sprintf(cmd,"echo %lu | nc -4u -w1 10.10.1.7 11223 &",rawsample);
+	   cout << "Sending to dsa1: " << cmd << endl;
+	   system(cmd);
+	   sprintf(cmd,"echo %lu | nc -4u -w1 10.10.1.8 11223 &",rawsample);
+	   system(cmd);
+	   sprintf(cmd,"echo %lu | nc -4u -w1 10.10.1.9 11223 &",rawsample);
+	   system(cmd);
+	   sprintf(cmd,"echo %lu | nc -4u -w1 10.10.1.10 11223 &",rawsample);
+	   system(cmd);
+	   sprintf(cmd,"echo %lu | nc -4u -w1 10.10.1.11 11223 &",rawsample);
+	   system(cmd);*/
+//	   sent=1;
+	   int start_idx;
+	   int end_idx;
+	   s1= h_group_inds[maxI]-1000;
+           if (s1<0) s1=0;
+           s2 = h_group_inds[maxI]+int((0.000761*h_group_dms[maxI])/pl->params.dt)+1000+(int)(pow(2.,h_group_filter_inds[maxI]));
+           if (s2>nbytes/(pl->params.nchans*nbits/8)) s2=nbytes/(pl->params.nchans*nbits/8);
+	   int duplicate = 0;
+	   for(int j=0; j < h_group_peaks.size(); j++)  {
+	   	if(s1 == s1s[j]) {
+			if(s2 == s2s[j]) {
+				duplicate = 1;
+			}
+           	}
+	   }
+	if(duplicate == 0) {
+	   s1s[i] = s1;
+	   s2s[i] = s2;
+	   start_idx = s1+first_idx;
+	   end_idx = s2+first_idx;
+     	   sprintf(filname,"/home/user/candidates/candidate_%d.fil",first_idx+h_group_inds[maxI]);
+     	   output = fopen(filname,"wb");
+     	   send_string("HEADER_START");
+    	   //send_string("source_name");
+     	   send_int("machine_id",1);
+     	   send_int("telescope_id",82);
+     	   send_int("data_type",1); // filterbank data
+	   //send_long_double("start_MJD",MJD);
+	   send_int("start_sample", start_idx);
+	   send_int("end_sample", end_idx);
+	   send_int("cand_location", first_idx+h_group_inds[maxI]);
+     	   send_double("fch1",pl->params.f0);
+     	   send_double("foff",pl->params.df);
+     	   send_int("nchans",pl->params.nchans);
+     	   send_int("nbits",nbits);
+     	   send_double("tstart",MJD_time_d);
+	   send_int("MJD_hour",MJD_hour);
+           send_int("MJD_minute",MJD_minute);
+           send_double("MJD_second",MJD_second);
+	   send_int("MJD_start", MJD_date);
+     	   send_double("tsamp",pl->params.dt);
+     	   send_int("nifs",1);
+     	   send_string("HEADER_END");
+
+	   if (s1<0) s1=0;
+	   s2 = h_group_inds[maxI]+int((0.000761*h_group_dms[maxI])/pl->params.dt)+1000+(int)(pow(2.,h_group_filter_inds[maxI]));
+	   if (s2>nbytes/(pl->params.nchans*nbits/8)) s2=nbytes/(pl->params.nchans*nbits/8);
+
+	   cout << "Outputting data in samples " << s1 << " " << s2 << endl;
+
+	   output_data.resize((s2-s1)*(pl->params.nchans*nbits/8));
+	   std::copy(pl->h_clean_filterbank.begin()+s1*(pl->params.nchans*nbits/8),pl->h_clean_filterbank.begin()+s2*(pl->params.nchans*nbits/8),output_data.begin());
+
+     	   fwrite((&output_data[0]),nbits/8,pl->params.nchans*(s2-s1),output);
+     	   fclose(output);
+	}
       }
-    }
-    else
-      cout << "Skipping dump due to bad file open on " << filename << endl;
-    cand_file.close();
-  //}
-    
+}
+}
+
+long double MJD_hit = MJD + first_idx * pl->params.dt/3600./24.;
+int MJD_date_hit = (int)MJD_hit;
+long double MJD_time_hit = MJD_hit - (long double)MJD_date_hit;
+int MJD_hour_hit = (long double)MJD_time_hit*24;
+int MJD_minute_hit = ((long double)MJD_time_hit*24-MJD_hour_hit)*60;
+double MJD_second_hit = (((long double)MJD_time_hit*24-MJD_hour_hit)*60 - MJD_minute_hit)*60;
+fprintf(hit_rate,"%i %i %i %f %i\n",MJD_date_hit, MJD_hour_hit, MJD_minute_hit, MJD_second_hit, hit_count);
+fclose(hit_rate);
+  fclose(cands_out);
   stop_timer(candidates_timer);
-  
+
+/*  cout << "sending first_idx to dsa1" << endl;
+  sprintf(cmd,"echo p %lu | nc -4u -w1 10.10.1.7 11223",first_idx);
+  system(cmd);
+  cout << "sending first_idx to dsa2" << endl;
+  sprintf(cmd,"echo p %lu | nc -4u -w1 10.10.1.8 11223",first_idx);
+  system(cmd);
+  cout << "sending first_idx to dsa3" << endl;
+  sprintf(cmd,"echo p %lu | nc -4u -w1 10.10.1.9 11223",first_idx);	
+  system(cmd);
+  cout << "sending first_idx to dsa4" << endl;
+  sprintf(cmd,"echo p %lu | nc -4u -w1 10.10.1.10 11223",first_idx);
+  system(cmd);
+  cout << "sending first_idx to dsa5" << endl;
+  sprintf(cmd,"echo p %lu | nc -4u -w1 10.10.1.11 11223",first_idx);
+  system(cmd);*/
+
   stop_timer(total_timer);
+  stop_timer(write_timer);
   
 #ifdef HD_BENCHMARK
   if( pl->params.verbosity >= 1 )
@@ -882,6 +1234,7 @@ hd_error hd_execute(hd_pipeline pl,
   cout << "Filtering time:          " << filter_timer.getTime() << endl;
   cout << "Find giants time:        " << giants_timer.getTime() << endl;
   cout << "Process candidates time: " << candidates_timer.getTime() << endl;
+  cout << "Write to disk time:      " << write_timer.getTime() << endl;
   cout << "Total time:              " << total_timer.getTime() << endl;
   }
 
@@ -911,7 +1264,9 @@ hd_error hd_execute(hd_pipeline pl,
               << candidates_timer.getTime() << endl;
   timing_file.close();
   */
-  
+
+
+
 #endif // HD_BENCHMARK
   
   if( too_many_giants ) {
@@ -920,6 +1275,12 @@ hd_error hd_execute(hd_pipeline pl,
   else {
     return HD_NO_ERROR;
   }
+
+  
+
+  //free(h_perm_fil_p);
+  //free(h_fil);
+
 }
 
 void hd_destroy_pipeline(hd_pipeline pipeline) {

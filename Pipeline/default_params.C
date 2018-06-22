@@ -15,7 +15,7 @@ void hd_set_default_params(hd_params* params) {
 #endif
 	params->sigproc_file    = NULL;
 	params->yield_cpu       = false;
-	params->nsamps_gulp     = 262144;//131072; // TODO: Check that this is good
+	params->nsamps_gulp     = 100000;//131072; // TODO: Check that this is good
 	// TODO: This is no longer being used
 	params->dm_gulp_size    = 2048;//256;    // TODO: Check that this is good
 	params->baseline_length = 2.0;
@@ -37,7 +37,7 @@ void hd_set_default_params(hd_params* params) {
 	params->rfi_broad       = true;
 	params->rfi_min_beams   = 8;
 	params->boxcar_max      = 4096;//2048;//512;
-	params->detect_thresh   = 6.0;
+	params->detect_thresh   = 6.5;
 	params->cand_sep_time   = 3;
 	// Note: These have very little effect on the candidates, but could be important
 	//         to capture (*rare*) coincident events.
