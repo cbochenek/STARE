@@ -1,0 +1,144 @@
+make  all-recursive
+make[1]: Entering directory '/home/user/linux_64/heimdall'
+Making all in Pipeline
+make[2]: Entering directory '/home/user/linux_64/heimdall/Pipeline'
+depbase=`echo default_params.lo | sed 's|[^/]*$|.deps/&|;s|\.lo$||'`;\
+libtool  --tag=CXX   --mode=compile g++ -DHAVE_CONFIG_H -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats     -g -O2   -MT default_params.lo -MD -MP -MF $depbase.Tpo -c -o default_params.lo default_params.C &&\
+mv -f $depbase.Tpo $depbase.Plo
+libtool: compile:  g++ -DHAVE_CONFIG_H -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats -g -O2 -MT default_params.lo -MD -MP -MF .deps/default_params.Tpo -c default_params.C  -fPIC -DPIC -o .libs/default_params.o
+libtool: compile:  g++ -DHAVE_CONFIG_H -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats -g -O2 -MT default_params.lo -MD -MP -MF .deps/default_params.Tpo -c default_params.C -o default_params.o >/dev/null 2>&1
+depbase=`echo error.lo | sed 's|[^/]*$|.deps/&|;s|\.lo$||'`;\
+libtool  --tag=CXX   --mode=compile g++ -DHAVE_CONFIG_H -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats     -g -O2   -MT error.lo -MD -MP -MF $depbase.Tpo -c -o error.lo error.C &&\
+mv -f $depbase.Tpo $depbase.Plo
+libtool: compile:  g++ -DHAVE_CONFIG_H -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats -g -O2 -MT error.lo -MD -MP -MF .deps/error.Tpo -c error.C  -fPIC -DPIC -o .libs/error.o
+libtool: compile:  g++ -DHAVE_CONFIG_H -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats -g -O2 -MT error.lo -MD -MP -MF .deps/error.Tpo -c error.C -o error.o >/dev/null 2>&1
+depbase=`echo parse_command_line.lo | sed 's|[^/]*$|.deps/&|;s|\.lo$||'`;\
+libtool  --tag=CXX   --mode=compile g++ -DHAVE_CONFIG_H -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats     -g -O2   -MT parse_command_line.lo -MD -MP -MF $depbase.Tpo -c -o parse_command_line.lo parse_command_line.C &&\
+mv -f $depbase.Tpo $depbase.Plo
+libtool: compile:  g++ -DHAVE_CONFIG_H -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats -g -O2 -MT parse_command_line.lo -MD -MP -MF .deps/parse_command_line.Tpo -c parse_command_line.C  -fPIC -DPIC -o .libs/parse_command_line.o
+libtool: compile:  g++ -DHAVE_CONFIG_H -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats -g -O2 -MT parse_command_line.lo -MD -MP -MF .deps/parse_command_line.Tpo -c parse_command_line.C -o parse_command_line.o >/dev/null 2>&1
+../cudalt.py clean_filterbank_rfi.lo /usr/local/cuda/bin/nvcc  -Xcompiler "-I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats   "  --compiler-options=\" -g -O2  -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats    \" -c clean_filterbank_rfi.cu
+/usr/local/cuda/bin/nvcc -Xcompiler -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats    --compiler-options=" -g -O2 -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats " -c clean_filterbank_rfi.cu -Xcompiler -fPIC -o .libs/clean_filterbank_rfi.o
+/usr/local/cuda/bin/nvcc -Xcompiler -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats    --compiler-options=" -g -O2 -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats " -c clean_filterbank_rfi.cu -o clean_filterbank_rfi.o
+../cudalt.py get_rms.lo /usr/local/cuda/bin/nvcc  -Xcompiler "-I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats   "  --compiler-options=\" -g -O2  -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats    \" -c get_rms.cu
+/usr/local/cuda/bin/nvcc -Xcompiler -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats    --compiler-options=" -g -O2 -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats " -c get_rms.cu -Xcompiler -fPIC -o .libs/get_rms.o
+/usr/local/cuda/bin/nvcc -Xcompiler -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats    --compiler-options=" -g -O2 -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats " -c get_rms.cu -o get_rms.o
+../cudalt.py matched_filter.lo /usr/local/cuda/bin/nvcc  -Xcompiler "-I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats   "  --compiler-options=\" -g -O2  -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats    \" -c matched_filter.cu
+/usr/local/cuda/bin/nvcc -Xcompiler -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats    --compiler-options=" -g -O2 -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats " -c matched_filter.cu -Xcompiler -fPIC -o .libs/matched_filter.o
+/usr/local/cuda/bin/nvcc -Xcompiler -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats    --compiler-options=" -g -O2 -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats " -c matched_filter.cu -o matched_filter.o
+../cudalt.py remove_baseline.lo /usr/local/cuda/bin/nvcc  -Xcompiler "-I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats   "  --compiler-options=\" -g -O2  -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats    \" -c remove_baseline.cu
+/usr/local/cuda/bin/nvcc -Xcompiler -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats    --compiler-options=" -g -O2 -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats " -c remove_baseline.cu -Xcompiler -fPIC -o .libs/remove_baseline.o
+/usr/local/cuda/bin/nvcc -Xcompiler -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats    --compiler-options=" -g -O2 -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats " -c remove_baseline.cu -o remove_baseline.o
+../cudalt.py find_giants.lo /usr/local/cuda/bin/nvcc  -Xcompiler "-I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats   "  --compiler-options=\" -g -O2  -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats    \" -c find_giants.cu
+/usr/local/cuda/bin/nvcc -Xcompiler -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats    --compiler-options=" -g -O2 -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats " -c find_giants.cu -Xcompiler -fPIC -o .libs/find_giants.o
+/usr/local/cuda/bin/nvcc -Xcompiler -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats    --compiler-options=" -g -O2 -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats " -c find_giants.cu -o find_giants.o
+../cudalt.py label_candidate_clusters.lo /usr/local/cuda/bin/nvcc  -Xcompiler "-I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats   "  --compiler-options=\" -g -O2  -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats    \" -c label_candidate_clusters.cu
+/usr/local/cuda/bin/nvcc -Xcompiler -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats    --compiler-options=" -g -O2 -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats " -c label_candidate_clusters.cu -Xcompiler -fPIC -o .libs/label_candidate_clusters.o
+/usr/local/cuda/bin/nvcc -Xcompiler -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats    --compiler-options=" -g -O2 -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats " -c label_candidate_clusters.cu -o label_candidate_clusters.o
+../cudalt.py merge_candidates.lo /usr/local/cuda/bin/nvcc  -Xcompiler "-I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats   "  --compiler-options=\" -g -O2  -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats    \" -c merge_candidates.cu
+/usr/local/cuda/bin/nvcc -Xcompiler -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats    --compiler-options=" -g -O2 -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats " -c merge_candidates.cu -Xcompiler -fPIC -o .libs/merge_candidates.o
+/usr/local/cuda/bin/nvcc -Xcompiler -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats    --compiler-options=" -g -O2 -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats " -c merge_candidates.cu -o merge_candidates.o
+../cudalt.py pipeline.lo /usr/local/cuda/bin/nvcc  -Xcompiler "-I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats   "  --compiler-options=\" -g -O2  -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats    \" -c pipeline.cu
+/usr/local/cuda/bin/nvcc -Xcompiler -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats    --compiler-options=" -g -O2 -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats " -c pipeline.cu -Xcompiler -fPIC -o .libs/pipeline.o
+/usr/local/cuda/bin/nvcc -Xcompiler -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats    --compiler-options=" -g -O2 -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats " -c pipeline.cu -o pipeline.o
+../cudalt.py measure_bandpass.lo /usr/local/cuda/bin/nvcc  -Xcompiler "-I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats   "  --compiler-options=\" -g -O2  -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats    \" -c measure_bandpass.cu
+/usr/local/cuda/bin/nvcc -Xcompiler -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats    --compiler-options=" -g -O2 -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats " -c measure_bandpass.cu -Xcompiler -fPIC -o .libs/measure_bandpass.o
+/usr/local/cuda/bin/nvcc -Xcompiler -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats    --compiler-options=" -g -O2 -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats " -c measure_bandpass.cu -o measure_bandpass.o
+../cudalt.py median_filter.lo /usr/local/cuda/bin/nvcc  -Xcompiler "-I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats   "  --compiler-options=\" -g -O2  -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats    \" -c median_filter.cu
+/usr/local/cuda/bin/nvcc -Xcompiler -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats    --compiler-options=" -g -O2 -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats " -c median_filter.cu -Xcompiler -fPIC -o .libs/median_filter.o
+/usr/local/cuda/bin/nvcc -Xcompiler -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats    --compiler-options=" -g -O2 -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Network -I../Formats " -c median_filter.cu -o median_filter.o
+libtool  --tag=CXX   --mode=link g++  -g -O2     -o libhdpipeline.la -rpath /usr/local/lib default_params.lo error.lo parse_command_line.lo clean_filterbank_rfi.lo get_rms.lo matched_filter.lo remove_baseline.lo find_giants.lo label_candidate_clusters.lo merge_candidates.lo pipeline.lo measure_bandpass.lo median_filter.lo matched_filter.lo  
+libtool: link: g++  -fPIC -DPIC -shared   .libs/default_params.o .libs/error.o .libs/parse_command_line.o .libs/clean_filterbank_rfi.o .libs/get_rms.o .libs/matched_filter.o .libs/remove_baseline.o .libs/find_giants.o .libs/label_candidate_clusters.o .libs/merge_candidates.o .libs/pipeline.o .libs/measure_bandpass.o .libs/median_filter.o .libs/matched_filter.o   -lstdc++ -lm -lc -lgcc_s   -g -O2   -Wl,-soname -Wl,libhdpipeline.so.0 -o .libs/libhdpipeline.so.0.0.0
+libtool: link: (cd ".libs" && rm -f "libhdpipeline.so.0" && ln -s "libhdpipeline.so.0.0.0" "libhdpipeline.so.0")
+libtool: link: (cd ".libs" && rm -f "libhdpipeline.so" && ln -s "libhdpipeline.so.0.0.0" "libhdpipeline.so")
+copying selected object files to avoid basename conflicts...
+libtool: link: ln matched_filter.o .libs/libhdpipeline.lax/lt1-matched_filter.o || cp matched_filter.o .libs/libhdpipeline.lax/lt1-matched_filter.o
+libtool: link: ar cru .libs/libhdpipeline.a default_params.o error.o parse_command_line.o clean_filterbank_rfi.o get_rms.o matched_filter.o remove_baseline.o find_giants.o label_candidate_clusters.o merge_candidates.o pipeline.o measure_bandpass.o median_filter.o .libs/libhdpipeline.lax/lt1-matched_filter.o
+libtool: link: ranlib .libs/libhdpipeline.a
+libtool: link: rm -fr .libs/libhdpipeline.lax
+libtool: link: ( cd ".libs" && rm -f "libhdpipeline.la" && ln -s "../libhdpipeline.la" "libhdpipeline.la" )
+make[2]: Leaving directory '/home/user/linux_64/heimdall/Pipeline'
+Making all in Formats
+make[2]: Entering directory '/home/user/linux_64/heimdall/Formats'
+depbase=`echo SigprocFile.lo | sed 's|[^/]*$|.deps/&|;s|\.lo$||'`;\
+libtool   --tag=CXX   --mode=compile g++ -DHAVE_CONFIG_H -I. -I.. -I../src    -g -O2   -MT SigprocFile.lo -MD -MP -MF $depbase.Tpo -c -o SigprocFile.lo SigprocFile.C &&\
+mv -f $depbase.Tpo $depbase.Plo
+libtool: compile:  g++ -DHAVE_CONFIG_H -I. -I.. -I../src -g -O2 -MT SigprocFile.lo -MD -MP -MF .deps/SigprocFile.Tpo -c SigprocFile.C  -fPIC -DPIC -o .libs/SigprocFile.o
+libtool: compile:  g++ -DHAVE_CONFIG_H -I. -I.. -I../src -g -O2 -MT SigprocFile.lo -MD -MP -MF .deps/SigprocFile.Tpo -c SigprocFile.C -o SigprocFile.o >/dev/null 2>&1
+depbase=`echo PSRDadaRingBuffer.lo | sed 's|[^/]*$|.deps/&|;s|\.lo$||'`;\
+libtool   --tag=CXX   --mode=compile g++ -DHAVE_CONFIG_H -I. -I.. -I../src    -g -O2   -MT PSRDadaRingBuffer.lo -MD -MP -MF $depbase.Tpo -c -o PSRDadaRingBuffer.lo PSRDadaRingBuffer.C &&\
+mv -f $depbase.Tpo $depbase.Plo
+libtool: compile:  g++ -DHAVE_CONFIG_H -I. -I.. -I../src -g -O2 -MT PSRDadaRingBuffer.lo -MD -MP -MF .deps/PSRDadaRingBuffer.Tpo -c PSRDadaRingBuffer.C  -fPIC -DPIC -o .libs/PSRDadaRingBuffer.o
+libtool: compile:  g++ -DHAVE_CONFIG_H -I. -I.. -I../src -g -O2 -MT PSRDadaRingBuffer.lo -MD -MP -MF .deps/PSRDadaRingBuffer.Tpo -c PSRDadaRingBuffer.C -o PSRDadaRingBuffer.o >/dev/null 2>&1
+libtool   --tag=CXX   --mode=link g++  -g -O2     -o libhdformats.la -rpath /usr/local/lib SigprocFile.lo PSRDadaRingBuffer.lo  
+libtool: link: g++  -fPIC -DPIC -shared   .libs/SigprocFile.o .libs/PSRDadaRingBuffer.o   -lstdc++ -lm -lc -lgcc_s   -g -O2   -Wl,-soname -Wl,libhdformats.so.0 -o .libs/libhdformats.so.0.0.0
+libtool: link: (cd ".libs" && rm -f "libhdformats.so.0" && ln -s "libhdformats.so.0.0.0" "libhdformats.so.0")
+libtool: link: (cd ".libs" && rm -f "libhdformats.so" && ln -s "libhdformats.so.0.0.0" "libhdformats.so")
+libtool: link: ar cru .libs/libhdformats.a  SigprocFile.o PSRDadaRingBuffer.o
+libtool: link: ranlib .libs/libhdformats.a
+libtool: link: ( cd ".libs" && rm -f "libhdformats.la" && ln -s "../libhdformats.la" "libhdformats.la" )
+make[2]: Leaving directory '/home/user/linux_64/heimdall/Formats'
+Making all in Network
+make[2]: Entering directory '/home/user/linux_64/heimdall/Network'
+depbase=`echo ClientSocket.lo | sed 's|[^/]*$|.deps/&|;s|\.lo$||'`;\
+libtool   --tag=CXX   --mode=compile g++ -DHAVE_CONFIG_H -I. -I.. -I../src    -g -O2   -MT ClientSocket.lo -MD -MP -MF $depbase.Tpo -c -o ClientSocket.lo ClientSocket.C &&\
+mv -f $depbase.Tpo $depbase.Plo
+libtool: compile:  g++ -DHAVE_CONFIG_H -I. -I.. -I../src -g -O2 -MT ClientSocket.lo -MD -MP -MF .deps/ClientSocket.Tpo -c ClientSocket.C  -fPIC -DPIC -o .libs/ClientSocket.o
+libtool: compile:  g++ -DHAVE_CONFIG_H -I. -I.. -I../src -g -O2 -MT ClientSocket.lo -MD -MP -MF .deps/ClientSocket.Tpo -c ClientSocket.C -o ClientSocket.o >/dev/null 2>&1
+depbase=`echo Socket.lo | sed 's|[^/]*$|.deps/&|;s|\.lo$||'`;\
+libtool   --tag=CXX   --mode=compile g++ -DHAVE_CONFIG_H -I. -I.. -I../src    -g -O2   -MT Socket.lo -MD -MP -MF $depbase.Tpo -c -o Socket.lo Socket.C &&\
+mv -f $depbase.Tpo $depbase.Plo
+libtool: compile:  g++ -DHAVE_CONFIG_H -I. -I.. -I../src -g -O2 -MT Socket.lo -MD -MP -MF .deps/Socket.Tpo -c Socket.C  -fPIC -DPIC -o .libs/Socket.o
+libtool: compile:  g++ -DHAVE_CONFIG_H -I. -I.. -I../src -g -O2 -MT Socket.lo -MD -MP -MF .deps/Socket.Tpo -c Socket.C -o Socket.o >/dev/null 2>&1
+depbase=`echo ServerSocket.lo | sed 's|[^/]*$|.deps/&|;s|\.lo$||'`;\
+libtool   --tag=CXX   --mode=compile g++ -DHAVE_CONFIG_H -I. -I.. -I../src    -g -O2   -MT ServerSocket.lo -MD -MP -MF $depbase.Tpo -c -o ServerSocket.lo ServerSocket.C &&\
+mv -f $depbase.Tpo $depbase.Plo
+libtool: compile:  g++ -DHAVE_CONFIG_H -I. -I.. -I../src -g -O2 -MT ServerSocket.lo -MD -MP -MF .deps/ServerSocket.Tpo -c ServerSocket.C  -fPIC -DPIC -o .libs/ServerSocket.o
+libtool: compile:  g++ -DHAVE_CONFIG_H -I. -I.. -I../src -g -O2 -MT ServerSocket.lo -MD -MP -MF .deps/ServerSocket.Tpo -c ServerSocket.C -o ServerSocket.o >/dev/null 2>&1
+libtool   --tag=CXX   --mode=link g++  -g -O2     -o libhdnetwork.la -rpath /usr/local/lib ClientSocket.lo Socket.lo ServerSocket.lo  
+libtool: link: g++  -fPIC -DPIC -shared   .libs/ClientSocket.o .libs/Socket.o .libs/ServerSocket.o   -lstdc++ -lm -lc -lgcc_s   -g -O2   -Wl,-soname -Wl,libhdnetwork.so.0 -o .libs/libhdnetwork.so.0.0.0
+libtool: link: (cd ".libs" && rm -f "libhdnetwork.so.0" && ln -s "libhdnetwork.so.0.0.0" "libhdnetwork.so.0")
+libtool: link: (cd ".libs" && rm -f "libhdnetwork.so" && ln -s "libhdnetwork.so.0.0.0" "libhdnetwork.so")
+libtool: link: ar cru .libs/libhdnetwork.a  ClientSocket.o Socket.o ServerSocket.o
+libtool: link: ranlib .libs/libhdnetwork.a
+libtool: link: ( cd ".libs" && rm -f "libhdnetwork.la" && ln -s "../libhdnetwork.la" "libhdnetwork.la" )
+make[2]: Leaving directory '/home/user/linux_64/heimdall/Network'
+Making all in Applications
+make[2]: Entering directory '/home/user/linux_64/heimdall/Applications'
+depbase=`echo heimdall.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+g++ -DHAVE_CONFIG_H -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Formats -I../Network -I../Pipeline -I/home/user     -g -O2   -MT heimdall.o -MD -MP -MF $depbase.Tpo -c -o heimdall.o heimdall.C &&\
+mv -f $depbase.Tpo $depbase.Po
+libtool   --tag=CXX   --mode=link g++  -g -O2     -o heimdall heimdall.o ../Formats/libhdformats.la ../Pipeline/libhdpipeline.la ../Network/libhdnetwork.la -lpsrdada -lcudart -lcuda -ldedisp -lstdc++ 
+libtool: link: g++ -g -O2 -o .libs/heimdall heimdall.o  ../Formats/.libs/libhdformats.so ../Pipeline/.libs/libhdpipeline.so ../Network/.libs/libhdnetwork.so /usr/local/lib/libpsrdada.a -L/usr/local/lib -lm -lcudart -lcuda -ldedisp -lstdc++ -pthread
+depbase=`echo coincidencer.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+g++ -DHAVE_CONFIG_H -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Formats -I../Network -I../Pipeline -I/home/user     -g -O2   -MT coincidencer.o -MD -MP -MF $depbase.Tpo -c -o coincidencer.o coincidencer.C &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo Candidates.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+g++ -DHAVE_CONFIG_H -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Formats -I../Network -I../Pipeline -I/home/user     -g -O2   -MT Candidates.o -MD -MP -MF $depbase.Tpo -c -o Candidates.o Candidates.C &&\
+mv -f $depbase.Tpo $depbase.Po
+libtool   --tag=CXX   --mode=link g++  -g -O2     -o coincidencer coincidencer.o Candidates.o ../Formats/libhdformats.la ../Pipeline/libhdpipeline.la ../Network/libhdnetwork.la -lpsrdada -lcudart -lcuda -ldedisp -lstdc++ 
+libtool: link: g++ -g -O2 -o .libs/coincidencer coincidencer.o Candidates.o  ../Formats/.libs/libhdformats.so ../Pipeline/.libs/libhdpipeline.so ../Network/.libs/libhdnetwork.so /usr/local/lib/libpsrdada.a -L/usr/local/lib -lm -lcudart -lcuda -ldedisp -lstdc++ -pthread
+depbase=`echo coincidencer_client.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+g++ -DHAVE_CONFIG_H -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Formats -I../Network -I../Pipeline -I/home/user     -g -O2   -MT coincidencer_client.o -MD -MP -MF $depbase.Tpo -c -o coincidencer_client.o coincidencer_client.C &&\
+mv -f $depbase.Tpo $depbase.Po
+libtool   --tag=CXX   --mode=link g++  -g -O2     -o coincidencer_client coincidencer_client.o ../Formats/libhdformats.la ../Pipeline/libhdpipeline.la ../Network/libhdnetwork.la -lpsrdada -lcudart -lcuda -ldedisp -lstdc++ 
+libtool: link: g++ -g -O2 -o .libs/coincidencer_client coincidencer_client.o  ../Formats/.libs/libhdformats.so ../Pipeline/.libs/libhdpipeline.so ../Network/.libs/libhdnetwork.so /usr/local/lib/libpsrdada.a -L/usr/local/lib -lm -lcudart -lcuda -ldedisp -lstdc++ -pthread
+depbase=`echo candidate_profiler.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+g++ -DHAVE_CONFIG_H -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Formats -I../Network -I../Pipeline -I/home/user     -g -O2   -MT candidate_profiler.o -MD -MP -MF $depbase.Tpo -c -o candidate_profiler.o candidate_profiler.C &&\
+mv -f $depbase.Tpo $depbase.Po
+libtool   --tag=CC   --mode=link gcc  -g -O2    -o candidate_profiler candidate_profiler.o ../Formats/libhdformats.la ../Pipeline/libhdpipeline.la ../Network/libhdnetwork.la -lpsrdada -lcudart -lcuda -ldedisp -lstdc++ 
+libtool: link: gcc -g -O2 -o .libs/candidate_profiler candidate_profiler.o  ../Formats/.libs/libhdformats.so ../Pipeline/.libs/libhdpipeline.so ../Network/.libs/libhdnetwork.so /usr/local/lib/libpsrdada.a -L/usr/local/lib -lm -lcudart -lcuda -ldedisp -lstdc++ -pthread
+depbase=`echo fil2pgm.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+g++ -DHAVE_CONFIG_H -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Formats -I../Network -I../Pipeline -I/home/user     -g -O2   -MT fil2pgm.o -MD -MP -MF $depbase.Tpo -c -o fil2pgm.o fil2pgm.C &&\
+mv -f $depbase.Tpo $depbase.Po
+libtool   --tag=CC   --mode=link gcc  -g -O2    -o fil2pgm fil2pgm.o ../Formats/libhdformats.la ../Pipeline/libhdpipeline.la ../Network/libhdnetwork.la -lpsrdada -lcudart -lcuda -ldedisp -lstdc++ 
+libtool: link: gcc -g -O2 -o .libs/fil2pgm fil2pgm.o  ../Formats/.libs/libhdformats.so ../Pipeline/.libs/libhdpipeline.so ../Network/.libs/libhdnetwork.so /usr/local/lib/libpsrdada.a -L/usr/local/lib -lm -lcudart -lcuda -ldedisp -lstdc++ -pthread
+depbase=`echo generate_dmlist.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+g++ -DHAVE_CONFIG_H -I. -I/usr/local/cuda/include -I.. -I/home/user/dedisp/src -I../src -I../ -I../Formats -I../Network -I../Pipeline -I/home/user     -g -O2   -MT generate_dmlist.o -MD -MP -MF $depbase.Tpo -c -o generate_dmlist.o generate_dmlist.C &&\
+mv -f $depbase.Tpo $depbase.Po
+libtool   --tag=CC   --mode=link gcc  -g -O2    -o generate_dmlist generate_dmlist.o ../Formats/libhdformats.la ../Pipeline/libhdpipeline.la ../Network/libhdnetwork.la -lpsrdada -lcudart -lcuda -ldedisp -lstdc++ 
+libtool: link: gcc -g -O2 -o .libs/generate_dmlist generate_dmlist.o  ../Formats/.libs/libhdformats.so ../Pipeline/.libs/libhdpipeline.so ../Network/.libs/libhdnetwork.so /usr/local/lib/libpsrdada.a -L/usr/local/lib -lm -lcudart -lcuda -ldedisp -lstdc++ -pthread
+make[2]: Leaving directory '/home/user/linux_64/heimdall/Applications'
+make[2]: Entering directory '/home/user/linux_64/heimdall'
+make[2]: Leaving directory '/home/user/linux_64/heimdall'
+make[1]: Leaving directory '/home/user/linux_64/heimdall'
